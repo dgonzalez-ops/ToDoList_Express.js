@@ -3,6 +3,7 @@ import { AuthRoutes } from './routes/authRoutes.js'
 import { sequelize } from './config/database.js'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
+import cors from 'cors'
 
 dotenv.config()
 
@@ -18,6 +19,14 @@ sequelize.sync()
 app.disable('x-powered-by')// Disable 'X-Powered-By' header for security
 app.use(express.json()) // Middleware to parse JSON bodies
 app.use(cookieParser())
+
+// Configura CORS para permitir desde el frontend
+app.use(cors({
+  origin: 'http://localhost:3000', // tu frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
 
 // Rutas de login y registro
 app.use('/auth', authRoutes.routes())

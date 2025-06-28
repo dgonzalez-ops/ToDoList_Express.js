@@ -29,7 +29,8 @@ class AuthController {
   }
 
   logout = async (req, res) => {
-    res.json('user : logout')
+    res.clearCookie('token')
+    res.status(200).json({ message: 'Sesión cerrada' })
   }
 
   register = async (req, res) => {
