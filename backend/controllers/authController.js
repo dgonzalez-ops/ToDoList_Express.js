@@ -7,9 +7,8 @@ class AuthController {
     try {
       const validated = loginSchema.parse(req.body)
 
-      const result = await loginUser(validated)
+      const result = await loginUser(validated.email, validated.password)
       if (result.error) return res.status(400).json({ error: result.error })
-
       // Guardar JWT en cookie segura
       res.cookie('token', result.token, {
         httpOnly: true,
