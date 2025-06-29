@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+//import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import React, { useState } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function RegisterForm({ onSwitchToLogin, onRegister }) {
@@ -40,15 +41,24 @@ export default function RegisterForm({ onSwitchToLogin, onRegister }) {
       })
 
       const data = await response.json()
+      console.log("Respuesta del servidor:", data)
 
       if (!response.ok) {
         if (data.error) {
           setError(data.error)
-        } else {
-          setError("Error al crear la cuenta")
+          setLoading(false)
+          return
         }
-        setLoading(false)
-        return
+        else if (data.errors) { 
+          let message = ""
+          for (const error of errores) {
+            message += error.message + ". "
+          }
+          setError(message || "Error al crear la cuenta")
+          setLoading(false)
+          console.log("message:", message)
+          return
+        }
       }
 
       // Opcional: redirige o cambia vista tras crear la cuenta
@@ -97,9 +107,13 @@ export default function RegisterForm({ onSwitchToLogin, onRegister }) {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 p-4 sm:p-6 pt-0">
-            <Button onClick={RegisterForm} disabled={loading} className="w-full">
+            {/* <Button onClick={RegisterForm} disabled={loading} className="w-full">
+              {loading ? "Creando..." : "Crear Cuenta"}
+            </Button> */}
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Creando..." : "Crear Cuenta"}
             </Button>
+
 
             {/* Solo muestra si hay error y no fue exitoso */}
             {!success && error && (
