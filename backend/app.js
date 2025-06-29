@@ -1,5 +1,6 @@
 import express from 'express'
 import { AuthRoutes } from './routes/authRoutes.js'
+import { TaskRoutes } from './routes/taskRoutes.js'
 import { sequelize } from './config/database.js'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
@@ -10,6 +11,7 @@ dotenv.config()
 const app = express()
 const port = process.env.PORT ?? 8080
 const authRoutes = new AuthRoutes()
+const taskRoutes = new TaskRoutes()
 
 // Sincronizar modelos con la base de datos
 sequelize.sync()
@@ -30,6 +32,9 @@ app.use(cors({
 
 // Rutas de login y registro
 app.use('/auth', authRoutes.routes())
+
+// Rutas de tareas
+app.use('/tasks', taskRoutes.routes())
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`)

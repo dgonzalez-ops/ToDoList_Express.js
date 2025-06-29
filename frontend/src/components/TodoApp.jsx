@@ -1,24 +1,102 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Check, Trash2, LogOut, User } from "lucide-react"
 
-export default function TodoApp({ onLogout }) {
-  // Datos de ejemplo para mostrar el diseño
-  const [mockTodos] = useState([
-    { id: 1, text: "Completar el proyecto de React", completed: false },
-    { id: 2, text: "Revisar documentación de shadcn/ui", completed: true },
-    { id: 3, text: "Preparar presentación para el equipo", completed: false },
-    { id: 4, text: "Actualizar dependencias del proyecto", completed: false },
-    { id: 5, text: "Escribir tests unitarios", completed: true },
-  ])
+function useAuthCheck() {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const completedCount = mockTodos.filter((todo) => todo.completed).length
-  const totalCount = mockTodos.length
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('http://localhost:8080/auth/check-auth', {
+          method: 'GET',
+          credentials: 'include', // Muy importante para enviar cookies
+        })
+
+        if (!res.ok) {
+          throw new Error('No autenticado')
+          setCurrentView("login")
+        }
+
+        const data = await res.json()
+        setUser(data.user)
+        setLoading(false)
+      } catch (err) {
+        setError(err.message)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [])
+
+  return { user, loading, error }
+}
+
+export default function TodoApp({ onLogout }) {
+  const [tasks, setTasks] = useState([]) 
+  const { user, loading, error } = useAuthCheck()
+
+  const fetchUserTasks = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/tasks/userTasks', {
+        method: 'GET',  // mejor GET para obtener datos
+        credentials: 'include' // enviar cookies con el token
+      })
+
+      if (!res.ok) {
+        console.log('No autorizado o error al obtener tareas:', res) 
+        return
+      }
+
+      const data = await res.json()
+      setTasks(data || [])
+    } catch (err) {
+      console.error('Error fetching tasks:', err)
+    }
+  }
+
+  async function handleLogout() {
+  const response = await fetch("http://localhost:8080/auth/logout", {
+        method: "POST",
+        credentials: 'include',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          
+        })
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        console.error("Error al cerrar sesión:", data)
+        return
+      }
+       onLogout();
+      console.log("Sesión cerrada correctamente:", data)
+      
+}
+
+useEffect(() => {
+  async function loadTasks() {
+    const data = await fetchUserTasks()  // llamas a tu función que hace fetch
+    if (data) setTasks(data)
+  }
+  loadTasks()
+}, [])
+
+  // const completedCount = mockTodos.filter((todo) => todo.completed).length
+  // const totalCount = mockTodos.length
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -28,19 +106,21 @@ export default function TodoApp({ onLogout }) {
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center space-x-2 sm:space-x-4">
               <h1 className="text-lg sm:text-xl font-bold text-white">To Do App</h1>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
+              {/* <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
                 {completedCount}/{totalCount}
-              </Badge>
+              </Badge> */}
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="hidden sm:flex items-center space-x-2 text-sm text-white">
                 <User className="h-4 w-4" />
-                <span>Usuario Demo</span>
+                <span>{
+                  loading ? "Cargando..." : user.email || "Invitado"
+                  }</span>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onLogout}
+                onClick={handleLogout}
                 className="bg-white text-gray-700 text-xs sm:text-sm px-2 sm:px-4"
               >
                 <LogOut className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
@@ -69,55 +149,72 @@ export default function TodoApp({ onLogout }) {
         {/* Todo List */}
         <div className="space-y-3">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Mis Tareas</h2>
-
-          {mockTodos.map((todo) => (
-            <Card key={todo.id} className={`transition-all duration-200 ${todo.completed ? "bg-gray-50" : "bg-white"}`}>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row space-y-3 sm:space-y-0">
-                  <div className="flex items-center space-x-3 flex-1 w-full">
-                    <Button
-                      variant={todo.completed ? "default" : "outline"}
-                      size="sm"
-                      className={`h-7 w-7 sm:h-8 sm:w-8 p-0 flex-shrink-0 ${todo.completed ? "bg-green-600 hover:bg-green-700" : "bg-white text-gray-600"}`}
-                    >
-                      <Check className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                      <span
-                        className={`block text-sm sm:text-base break-words ${todo.completed ? "line-through text-gray-500" : "text-gray-900"}`}
-                      >
-                        {todo.text}
-                      </span>
-                      {todo.completed && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs mt-1 sm:hidden">
-                          Completada
-                        </Badge>
-                      )}
-                    </div>
-                    {todo.completed && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-green-100 text-green-800 text-xs sm:text-sm hidden sm:inline-flex"
-                      >
-                        Completada
-                      </Badge>
-                    )}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 w-7 sm:h-8 sm:w-8 p-0 bg-white text-red-600 hover:bg-red-50 flex-shrink-0 self-end sm:self-center"
+                {tasks.map((todo) => (
+                  <Card
+                    key={todo.id}
+                    className={`transition-all duration-200 ${
+                      todo.completed ? "bg-gray-50" : "bg-white"
+                    }`}
                   >
-                    <Trash2 className="h-4 w-4 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+                        {/* Parte izquierda: checkbox + texto + badge */}
+                        <div className="flex items-start sm:items-center gap-3 w-full">
+                          {/* Checkbox */}
+                          <Button
+                            variant={todo.completed ? "default" : "outline"}
+                            size="md"
+                            className={`h-8 w-8 p-0 flex-shrink-0 ${
+                              todo.completed
+                                ? "bg-green-600 hover:bg-green-700"
+                                : "bg-white text-gray-600"
+                            }`}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          
+                          {/* Título + badge */}
+                          <div className="flex flex-col w-full">
+                            <span
+                              className={`text-sm sm:text-base break-words ${
+                                todo.completed ? "line-through text-gray-500" : "text-gray-900"
+                              }`}
+                            >
+                              {todo.title}
+                            </span>
+                            
+                            {/* Badge mobile */}
+                            {todo.completed && (
+                              <Badge className="bg-green-100 text-green-800 text-xs mt-1 sm:hidden w-fit">
+                                Completada
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                          
+                        {/* Badge en desktop */}
+                        {todo.completed && (
+                          <Badge className="bg-green-100 text-green-800 text-sm hidden sm:inline-flex">
+                            Completada
+                          </Badge>
+                        )}
+
+                        {/* Botón eliminar */}
+                        <Button
+                          variant="outline"
+                          size="md"
+                          className="h-8 w-8 p-0 bg-white text-red-600 hover:bg-red-50 self-end sm:self-center"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
         </div>
 
         {/* Empty State */}
-        {mockTodos.length === 0 && (
+        {tasks.length === 0 && (
           <Card className="mt-8">
             <CardContent className="p-8 sm:p-12 text-center">
               <div className="text-gray-400 mb-4">

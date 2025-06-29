@@ -33,6 +33,7 @@ export default function LoginForm({ onSwitchToRegister, onLogin }) {
 
       const response = await fetch("http://localhost:8080/auth/login", {
         method: "POST",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json"
         },
@@ -42,7 +43,6 @@ export default function LoginForm({ onSwitchToRegister, onLogin }) {
         })
       })
       const data = await response.json()
-      console.log("Respuesta del servidor:", data)
 
       if (!response.ok) {
         if (data.error) {

@@ -1,6 +1,7 @@
 //  const User = require('../models/User')
 import { registerUser, loginUser } from '../services/authServices.js'
 import { registerSchema, loginSchema } from '../middleware/authValidation.js'
+// import { email } from 'zod/v4'
 
 class AuthController {
   login = async (req, res) => {
@@ -12,8 +13,8 @@ class AuthController {
       // Guardar JWT en cookie segura
       res.cookie('token', result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // en producción true
-        sameSite: 'strict',
+        secure: false, // en producción true
+        sameSite: 'lax', // strict en producttion, lax en desarrollo
         maxAge: 3600000 // 1 hora
       })
 
@@ -28,7 +29,12 @@ class AuthController {
   }
 
   logout = async (req, res) => {
-    res.clearCookie('token')
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/' // IMPORTANTE, especificar path si la cookie se creó con path='/'
+    })
     res.status(200).json({ message: 'Sesión cerrada' })
   }
 
@@ -50,6 +56,11 @@ class AuthController {
       console.error(error)
       res.status(500).json({ error: 'Error interno del servidor' })
     }
+  }
+
+  checkauth = (req, res) => {
+    // authToken ya verificó todo
+    res.status(200).json({ message: 'Usuario autenticado', user: req.user })
   }
 }
 export { AuthController }
