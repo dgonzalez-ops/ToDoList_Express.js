@@ -45,6 +45,8 @@ function useAuthCheck() {
 export default function TodoApp({ onLogout }) {
   const [tasks, setTasks] = useState([]) 
   const { user, loading, error } = useAuthCheck()
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  
 
   const fetchUserTasks = async () => {
     try {
@@ -87,16 +89,64 @@ export default function TodoApp({ onLogout }) {
       
 }
 
+const handleNewTask = async () => {
+  if (!newTaskTitle.trim()) return; 
+
+  const res = await fetch('http://localhost:8080/tasks/createTask', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ title: newTaskTitle }),
+  });
+
+  if (res.ok) {
+    // limpiar input, recargar tareas, etc.
+    setNewTaskTitle('');
+    await fetchUserTasks();
+  } else {
+    console.error('Error al crear la tarea');
+  }
+};
+
+const handleDeleteTask = async (taskId) => {
+  const res = await fetch(`http://localhost:8080/tasks/deleteTask/${taskId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  }); 
+  if (res.ok) {
+    // Recargar tareas después de eliminar
+    await fetchUserTasks();
+  } else {
+    console.error('Error al eliminar la tarea');
+  }
+};
+
+const handleCompleted = async (taskId) => {
+  const res = await fetch(`http://localhost:8080/tasks/completeTask/${taskId}`, {
+    method: 'PUT',
+    credentials: 'include',
+  });
+  if (res.ok) {
+    // Recargar tareas después de marcar como completada 
+    await fetchUserTasks();
+  } else {
+    console.error('Error al completar la tarea');
+  }
+};
+
+
 useEffect(() => {
   async function loadTasks() {
-    const data = await fetchUserTasks()  // llamas a tu función que hace fetch
+    const data = await fetchUserTasks()  
     if (data) setTasks(data)
   }
   loadTasks()
 }, [])
 
-  // const completedCount = mockTodos.filter((todo) => todo.completed).length
-  // const totalCount = mockTodos.length
+  const completedCount = tasks.filter((todo) => todo.completed).length
+  const totalCount = tasks.length
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -106,9 +156,9 @@ useEffect(() => {
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center space-x-2 sm:space-x-4">
               <h1 className="text-lg sm:text-xl font-bold text-white">To Do App</h1>
-              {/* <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
                 {completedCount}/{totalCount}
-              </Badge> */}
+              </Badge>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="hidden sm:flex items-center space-x-2 text-sm text-white">
@@ -137,8 +187,13 @@ useEffect(() => {
         <Card className="mb-6 sm:mb-8">
           <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-              <Input placeholder="Añadir nueva tarea..." className="flex-1 text-sm sm:text-base" />
-              <Button className="px-4 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
+              <Input
+                placeholder="Añadir nueva tarea..."
+                className="flex-1 text-sm sm:text-base"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+              />
+              <Button className="px-4 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto" onClick={handleNewTask}>
                 <Plus className="h-4 w-4 mr-2" />
                 Añadir
               </Button>
@@ -169,6 +224,7 @@ useEffect(() => {
                                 ? "bg-green-600 hover:bg-green-700"
                                 : "bg-white text-gray-600"
                             }`}
+                            onClick={handleCompleted.bind(null, todo.id)}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -204,6 +260,7 @@ useEffect(() => {
                           variant="outline"
                           size="md"
                           className="h-8 w-8 p-0 bg-white text-red-600 hover:bg-red-50 self-end sm:self-center"
+                          onClick={handleDeleteTask.bind(null, todo.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -237,7 +294,7 @@ useEffect(() => {
               <span className="text-base sm:text-lg font-semibold">Diego González Alcázar</span>
             </div>
             <p className="text-gray-300 text-sm mb-2">Desarrollador Fullstack</p>
-            <p className="text-gray-400 text-xs sm:text-sm px-4">Hecho con ❤️ usando React, Tailwind CSS y shadcn/ui</p>
+            <p className="text-gray-400 text-xs sm:text-sm px-4">Hecho con ❤️ usando React, Tailwind CSS y Node.js</p>
             <div className="mt-4 pt-4 border-t border-gray-700">
               <p className="text-gray-500 text-xs">© 2025 To Do App. Todos los derechos reservados.</p>
             </div>

@@ -9,6 +9,9 @@ export class TaskRoutes {
     this.router = express.Router()
 
     this.router.get('/userTasks', authToken, taskController.getAllTasks)
+    this.router.post('/createTask', authToken, taskController.createTask)
+    this.router.delete('/deleteTask/:id', authToken, taskController.deleteTask)
+    this.router.put('/completeTask/:id', authToken, taskController.completeTask)
     this.router.get('/test-auth', authToken, (req, res) => {
       res.json({ message: 'Acceso concedido', user: req.user })
     })
