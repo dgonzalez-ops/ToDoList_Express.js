@@ -6,6 +6,13 @@ Este proyecto es una **aplicación ToDoList** desarrollada utilizando tecnologí
 
 ---
 
+## 📸 Capturas de la aplicacion
+![Mi ToDoList](./imgs/1.png)
+![Mi ToDoList](./imgs/2.png)
+
+
+---
+
 ## 🚀 Tecnologías usadas
 
 - **Backend:**
