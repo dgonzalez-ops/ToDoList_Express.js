@@ -2,7 +2,7 @@
 
 ¡Bienvenido a mi primer proyecto con Node.js!
 
-Este proyecto es una **aplicación ToDoList** desarrollada utilizando tecnologías modernas como **Express.js, MySQL, React y Tailwind CSS**. El objetivo principal fue aprender y aplicar conceptos clave de backend y frontend, así como familiarizarme con la arquitectura MVC.
+Este proyecto es una **aplicación ToDoList** desarrollada utilizando tecnologías modernas como **Express.js, MySQL, React, Tailwind CSS** y Json Web Tokens (JWT) para todo el tema de sesiones. El objetivo principal fue aprender y aplicar conceptos clave de backend y frontend, así como familiarizarme con la arquitectura MVC.
 
 ---
 
